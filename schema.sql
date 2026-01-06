@@ -5,8 +5,11 @@ CREATE TABLE IF NOT EXISTS users (
   height_cm REAL NOT NULL,
   age INTEGER DEFAULT 25,
   sex TEXT DEFAULT 'M',
-  activity REAL DEFAULT 1.4
+  activity REAL DEFAULT 1.4,
+  target_kcal REAL
 );
+
+
 
 CREATE TABLE IF NOT EXISTS foods (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,8 +20,11 @@ CREATE TABLE IF NOT EXISTS foods (
 
 CREATE TABLE IF NOT EXISTS meals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('breakfast','lunch','dinner','snack'))
 );
+
+
 
 CREATE TABLE IF NOT EXISTS meal_items (
   meal_id INTEGER NOT NULL,

@@ -26,6 +26,8 @@
       <select id="sex">
         <option value="M">Vīrietis</option>
         <option value="F">Sieviete</option>
+      <input id="target" placeholder="Mērķis (kcal)" type="number" />
+
       </select>
       <select id="activity">
         <option value="1.2">Mazkustīgs (1.2)</option>
@@ -52,7 +54,6 @@ let userId = null;
 
 document.getElementById("date").valueAsDate = new Date();
 
-//Pievieno OnClick listener,lai saglabātu lietotāja datus
 document.getElementById("saveUser").onclick = async () => {
   const payload = {
     name: document.getElementById("name").value,
@@ -61,6 +62,8 @@ document.getElementById("saveUser").onclick = async () => {
     age: document.getElementById("age").value,
     sex: document.getElementById("sex").value,
     activity: document.getElementById("activity").value,
+    target_kcal: document.getElementById("target").value
+
   };
   const res = await fetch("/api/user", {
     method: "POST",
@@ -72,7 +75,6 @@ document.getElementById("saveUser").onclick = async () => {
   document.getElementById("userId").textContent = userId;
 };
 
-//Šablons, lai atkārtoti lietot kodā
 function mealHtml(title, meal) {
   return `
     <div class="card">
@@ -84,8 +86,6 @@ function mealHtml(title, meal) {
   `;
 }
 
-
-// Pievieno OnClick listener, lai iegūt plānu no servera
 document.getElementById("loadPlan").onclick = async () => {
   if (!userId) {
     alert("Vispirms saglabā lietotāju (lai iegūtu user_id).");
