@@ -52,6 +52,7 @@ let userId = null;
 
 document.getElementById("date").valueAsDate = new Date();
 
+//Pievieno OnClick listener,lai saglabātu lietotāja datus
 document.getElementById("saveUser").onclick = async () => {
   const payload = {
     name: document.getElementById("name").value,
@@ -71,6 +72,7 @@ document.getElementById("saveUser").onclick = async () => {
   document.getElementById("userId").textContent = userId;
 };
 
+//Šablons, lai atkārtoti lietot koda
 function mealHtml(title, meal) {
   return `
     <div class="card">
@@ -82,6 +84,8 @@ function mealHtml(title, meal) {
   `;
 }
 
+
+// Pievieno OnClick listener, lai iegūt plānu no servera
 document.getElementById("loadPlan").onclick = async () => {
   if (!userId) {
     alert("Vispirms saglabā lietotāju (lai iegūtu user_id).");
