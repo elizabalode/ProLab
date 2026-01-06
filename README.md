@@ -42,3 +42,26 @@ Novērtēt, vai sistēma:
 
 ## Konceptu modelis
 <img width="1026" height="656" alt="image" src="https://github.com/user-attachments/assets/799e5748-39f2-4b87-ae6e-4f835a859e61" />
+
+---
+
+## Tehnoloģiju steks
+
+| Komponents | Tehnoloģija |
+|---|---|
+| Lietotnes tips | Web lietotne |
+| Backend | Python (Flask) |
+| Datubāze | SQLite (`app.db`) |
+| DB piekļuve | Python `sqlite3` |
+| Frontend | HTML, CSS, JavaScript |
+| API | REST (JSON) |
+| Datu formāts | JSON |
+
+---
+
+### Autori
+- Adelīna Diāna Mālija
+- Krišjānis Kugrēns
+- Viola Jansone
+- Elīza Balode
+- Alens Niks Limanskis
