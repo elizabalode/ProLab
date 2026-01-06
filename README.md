@@ -38,3 +38,7 @@ Novērtēt, vai sistēma:
 4. Katras ēdienreizes kcal summa:
    - `kcal = grams * kcal_per_100g / 100`
 
+---
+
+## Konceptu modelis
+<img width="1026" height="656" alt="image" src="https://github.com/user-attachments/assets/799e5748-39f2-4b87-ae6e-4f835a859e61" />
