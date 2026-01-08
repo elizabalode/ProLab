@@ -66,6 +66,19 @@ Pašreizējā prototipā ēdienkarte tiek veidota no iepriekš definētiem ēdie
 
 ---
 
+## Autorizācija
+
+Lietotnē ir autorizācija ar e-pastu un paroli, lai funkcionalitāte būtu pieejama tikai pēc pieteikšanās sistēmā.
+
+- Lietotājs var **reģistrēties** un **ielogoties** ar e-pastu un paroli.
+- Katram kontam var būt piesaistīts lietotāja profils (biometriskie dati), kas tiek glabāts datubāzē un automātiski ielādējas pēc ielogošanās.
+
+Tiek izmantota tabula `accounts`:
+- `email` (unikāls),
+- `password_hash` (parole netiek glabāta tīrā tekstā, bet kā hash),
+un `users` tabulā tiek glabāts `account_id`, lai piesaistītu profilu konkrētam kontam.
+
+---
 ## Tehnoloģiju steks
 
 | Komponents | Tehnoloģija |
