@@ -44,3 +44,13 @@ CREATE TABLE IF NOT EXISTS meal_plans (
   PRIMARY KEY (user_id, plan_date),
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+
+ALTER TABLE users ADD COLUMN account_id INTEGER;

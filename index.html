@@ -12,12 +12,10 @@
 
   <style>
     body {
-      font-family: "Inter", system-ui, Arial; /* Fonts */
+      font-family: "Inter", system-ui, Arial;
       max-width: 900px;
       margin: 24px auto;
       padding: 0 16px;
-
-      /* Krasas, izsaktas diezgan briesmigi :D */
       background: linear-gradient(135deg, #e9c2eb, #81aeec);
       min-height: 100vh;
     }
@@ -27,7 +25,7 @@
     input, select, button {
       padding: 10px;
       font-size: 14px;
-      font-family: "Inter", system-ui, Arial; /* Pogas izskatas mazliet citadak */
+      font-family: "Inter", system-ui, Arial;
     }
 
     .card {
@@ -35,8 +33,6 @@
       border-radius: 12px;
       padding: 14px;
       margin-top: 14px;
-
-      /* Kartina */
       background: rgba(223, 144, 144, 0.534);
     }
 
@@ -47,41 +43,61 @@
 <body>
   <h1>Vienkāršota Ēdienkarte (pa dienām)</h1>
 
+  <!-- Autorizācija, te ir tas epasts un paroles dsds@hotmail.com ar manu izveidoto Daina profilu :D -->
   <div class="card">
-    <h2>Lietotājs</h2>
+    <h2>Autorizācija</h2>
     <div class="row">
-      <input id="name" placeholder="Vārds" value="flacko" />
-      <input id="weight" placeholder="Svars (kg)" type="number" step="0.1" />
-      <input id="height" placeholder="Augums (cm)" type="number" step="0.1" />
-      <input id="age" placeholder="Vecums" type="number" value="25" />
-
-      <select id="sex">
-        <option value="M">Vīrietis</option>
-        <option value="F">Sieviete</option>
-      </select>
-
-      <select id="activity">
-        <option value="1.2">Mazkustīgs (1.2)</option>
-        <option value="1.4" selected>Vidēji (1.4)</option>
-        <option value="1.6">Aktīvs (1.6)</option>
-        <option value="1.8">Ļoti aktīvs (1.8)</option>
-      </select>
-
-      <input id="target" placeholder="Mērķis (kcal)" type="number" />
-
-      <button id="saveUser">Saglabāt</button>
+      <input id="email" placeholder="Email" />
+      <input id="password" placeholder="Parole" type="password" />
+      <button id="registerBtn">Reģistrēties</button>
+      <button id="loginBtn">Ielogoties</button>
+      <button id="logoutBtn">Izlogoties</button>
     </div>
-
-    <p>user_id: <span id="userId">—</span></p>
+    <p>Statuss: <span id="authState">—</span></p>
   </div>
 
-  <div class="card">
-    <h2>Plāns</h2>
-    <div class="row">
-      <input id="date" type="date" />
-      <button id="loadPlan">Ielādēt plānu</button>
+  
+  <p id="loginHint" style="margin-top:12px;"><b>Ielogojies</b>, lai redzētu lietotāja un plāna paneli.</p>
+
+  
+  <div id="appPanels" style="display:none;">
+
+    <div class="card">
+      <h2>Lietotājs</h2>
+      <div class="row">
+        <input id="name" placeholder="Vārds" value="flacko" />
+        <input id="weight" placeholder="Svars (kg)" type="number" step="0.1" />
+        <input id="height" placeholder="Augums (cm)" type="number" step="0.1" />
+        <input id="age" placeholder="Vecums" type="number" value="25" />
+
+        <select id="sex">
+          <option value="M">Vīrietis</option>
+          <option value="F">Sieviete</option>
+        </select>
+
+        <select id="activity">
+          <option value="1.2">Mazkustīgs (1.2)</option>
+          <option value="1.4" selected>Vidēji (1.4)</option>
+          <option value="1.6">Aktīvs (1.6)</option>
+          <option value="1.8">Ļoti aktīvs (1.8)</option>
+        </select>
+
+        <input id="target" placeholder="Mērķis (kcal)" type="number" />
+        <button id="saveUser">Saglabāt</button>
+      </div>
+
+      <p>user_id: <span id="userId">—</span></p>
     </div>
-    <div id="planOut" style="margin-top:12px;"></div>
+
+    <div class="card">
+      <h2>Plāns</h2>
+      <div class="row">
+        <input id="date" type="date" />
+        <button id="loadPlan">Ielādēt plānu</button>
+      </div>
+      <div id="planOut" style="margin-top:12px;"></div>
+    </div>
+
   </div>
 
 <script>
@@ -100,9 +116,75 @@ function mealHtml(title, meal) {
   `;
 }
 
-document.getElementById("saveUser").onclick = async () => {
-  console.log("SAVE CLICK");
+async function refreshAuth() {
+  const panels = document.getElementById("appPanels");
+  const hint = document.getElementById("loginHint");
 
+  try {
+    const res = await fetch("/api/me");
+    const me = await res.json();
+
+    const loggedIn = !!me.logged_in;
+    document.getElementById("authState").textContent = loggedIn ? "Ielogots" : "Nav ielogots";
+
+    panels.style.display = loggedIn ? "block" : "none";
+    hint.style.display = loggedIn ? "none" : "block";
+
+    if (!loggedIn) {
+      userId = null;
+      document.getElementById("userId").textContent = "—";
+      document.getElementById("planOut").innerHTML = "";
+    }
+  } catch (e) {
+    document.getElementById("authState").textContent = "Nevar nolasīt /api/me";
+    panels.style.display = "none";
+    hint.style.display = "block";
+  }
+}
+refreshAuth();
+
+/* register/login/logout */
+document.getElementById("registerBtn").onclick = async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("/api/register", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return alert("Reģistrācija neizdevās: " + (data.error || res.status));
+
+  alert("Reģistrācija OK — tagad ielogojies.");
+};
+
+document.getElementById("loginBtn").onclick = async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return alert("Login neizdevās: " + (data.error || res.status));
+
+  await refreshAuth();
+  alert("Login OK");
+};
+
+document.getElementById("logoutBtn").onclick = async () => {
+  await fetch("/api/logout", { method: "POST" });
+  await refreshAuth();
+  alert("Logout OK");
+};
+
+/* User tiek saglabāts */
+document.getElementById("saveUser").onclick = async () => {
   const payload = {
     name: document.getElementById("name").value,
     weight_kg: document.getElementById("weight").value,
@@ -121,34 +203,22 @@ document.getElementById("saveUser").onclick = async () => {
     });
 
     const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      alert("Saglabāt neizdevās: " + (data.error || res.status));
-      console.log("Save user error:", data);
-      return;
-    }
+    if (!res.ok) return alert("Saglabāt neizdevās: " + (data.error || res.status));
 
     userId = data.user_id;
     document.getElementById("userId").textContent = userId;
-
   } catch (e) {
     alert("Nevar pieslēgties backend (/api/user). Pārliecinies, ka atver lapu no PORTS (5000).");
     console.log(e);
   }
 };
 
+
 document.getElementById("loadPlan").onclick = async () => {
-  console.log("PLAN CLICK", userId);
-
-  if (!userId) {
-    alert("Vispirms saglabā lietotāju (lai iegūtu user_id).");
-    return;
-  }
-
   const date = document.getElementById("date").value;
 
   try {
-    const res = await fetch(`/api/plan?user_id=${userId}&date=${date}`);
+    const res = await fetch(`/api/plan?date=${date}`);
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
@@ -169,7 +239,6 @@ document.getElementById("loadPlan").onclick = async () => {
       ${mealHtml("Pusdienas", data.meals.lunch)}
       ${mealHtml("Vakariņas", data.meals.dinner)}
     `;
-
   } catch (e) {
     document.getElementById("planOut").innerHTML =
       `<p style="color:red;"><b>Fetch error:</b> ${e}</p>`;
