@@ -93,6 +93,13 @@ un `users` tabulā tiek glabāts `account_id`, lai piesaistītu profilu konkrēt
 
 ---
 
+## Plakāts
+
+<img width="2134" height="752" alt="image" src="https://github.com/user-attachments/assets/43e5e80e-90e8-4673-9369-0ef8876386ad" />
+
+
+---
+
 ### Autori
 - Adelīna Diāna Mālija
 - Krišjānis Kugrēns
