@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ēdienkarte pēc dienām</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,15 +18,12 @@
       background: linear-gradient(135deg, #e9c2eb, #81aeec);
       min-height: 100vh;
     }
-
     .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-
     input, select, button {
       padding: 10px;
       font-size: 14px;
       font-family: "Inter", system-ui, Arial;
     }
-
     .card {
       border: 1px solid #ddd;
       border-radius: 12px;
@@ -35,7 +31,6 @@
       margin-top: 14px;
       background: rgba(223, 144, 144, 0.534);
     }
-
     h2 { margin: 0 0 8px; }
     ul { margin: 8px 0 0; }
   </style>
@@ -43,7 +38,7 @@
 <body>
   <h1>Vienkāršota Ēdienkarte (pa dienām)</h1>
 
-  <!-- Autorizācija, te ir tas epasts un paroles dsds@hotmail.com ar manu izveidoto Daina profilu :D -->
+  <!-- Autorizācija -->
   <div class="card">
     <h2>Autorizācija</h2>
     <div class="row">
@@ -56,10 +51,8 @@
     <p>Statuss: <span id="authState">—</span></p>
   </div>
 
-  
   <p id="loginHint" style="margin-top:12px;"><b>Ielogojies</b>, lai redzētu lietotāja un plāna paneli.</p>
 
-  
   <div id="appPanels" style="display:none;">
 
     <div class="card">
@@ -116,6 +109,28 @@ function mealHtml(title, meal) {
   `;
 }
 
+async function loadProfile() {
+  const res = await fetch("/api/profile");
+  const p = await res.json();
+
+  if (!p.has_profile) {
+    userId = null;
+    document.getElementById("userId").textContent = "—";
+    return;
+  }
+
+  userId = p.user_id;
+  document.getElementById("userId").textContent = userId;
+
+  document.getElementById("name").value = p.name ?? "";
+  document.getElementById("weight").value = p.weight_kg ?? "";
+  document.getElementById("height").value = p.height_cm ?? "";
+  document.getElementById("age").value = p.age ?? 25;
+  document.getElementById("sex").value = p.sex ?? "M";
+  document.getElementById("activity").value = String(p.activity ?? "1.4");
+  document.getElementById("target").value = (p.target_kcal ?? "");
+}
+
 async function refreshAuth() {
   const panels = document.getElementById("appPanels");
   const hint = document.getElementById("loginHint");
@@ -130,7 +145,9 @@ async function refreshAuth() {
     panels.style.display = loggedIn ? "block" : "none";
     hint.style.display = loggedIn ? "none" : "block";
 
-    if (!loggedIn) {
+    if (loggedIn) {
+      await loadProfile(); // ✅ pēc login ielādē profilu
+    } else {
       userId = null;
       document.getElementById("userId").textContent = "—";
       document.getElementById("planOut").innerHTML = "";
@@ -183,7 +200,7 @@ document.getElementById("logoutBtn").onclick = async () => {
   alert("Logout OK");
 };
 
-/* User tiek saglabāts */
+/* saglabā profilu */
 document.getElementById("saveUser").onclick = async () => {
   const payload = {
     name: document.getElementById("name").value,
@@ -213,7 +230,7 @@ document.getElementById("saveUser").onclick = async () => {
   }
 };
 
-
+/* load plan */
 document.getElementById("loadPlan").onclick = async () => {
   const date = document.getElementById("date").value;
 

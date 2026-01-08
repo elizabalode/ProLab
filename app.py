@@ -14,7 +14,6 @@ def db():
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def init_db():
     conn = db()
 
@@ -36,7 +35,6 @@ def init_db():
 
 init_db()
 
-# ---------------- AUTH helpers ----------------
 def login_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -48,7 +46,6 @@ def login_required(fn):
 def get_current_account_id():
     return session.get("account_id")
 
-# ---------------- Calories logic (tavs kods) ----------------
 def mifflin_st_jeor(weight_kg, height_cm, age, sex):
     s = 5 if sex.upper() == "M" else -161
     return 10 * weight_kg + 6.25 * height_cm - 5 * age + s
@@ -126,7 +123,6 @@ def ensure_plan(conn, user_id, date_str, user_row):
         (user_id, date_str)
     ).fetchone()
 
-# ---------------- Routes ----------------
 @app.get("/")
 def index():
     return send_from_directory(APP_DIR, "index.html")
@@ -172,6 +168,33 @@ def logout():
 @app.get("/api/me")
 def me():
     return jsonify({"logged_in": bool(session.get("account_id"))})
+
+
+@app.get("/api/profile")
+@login_required
+def profile():
+    account_id = get_current_account_id()
+    conn = db()
+
+    user = conn.execute(
+        "SELECT * FROM users WHERE account_id=? ORDER BY id DESC LIMIT 1",
+        (account_id,)
+    ).fetchone()
+
+    if not user:
+        return jsonify({"has_profile": False})
+
+    return jsonify({
+        "has_profile": True,
+        "user_id": user["id"],
+        "name": user["name"],
+        "weight_kg": user["weight_kg"],
+        "height_cm": user["height_cm"],
+        "age": user["age"],
+        "sex": user["sex"],
+        "activity": user["activity"],
+        "target_kcal": user["target_kcal"]
+    })
 
 @app.post("/api/user")
 @login_required
