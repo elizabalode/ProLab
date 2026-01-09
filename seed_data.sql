@@ -28,22 +28,24 @@ INSERT INTO foods(name, kcal_per_100g) VALUES
 ('Almonds', 579);
 
 -- ===== MEALS (with type) =====
-INSERT INTO meals(name, type) VALUES
-('Brokastis #1', 'breakfast'),
-('Brokastis #2', 'breakfast'),
-('Brokastis #3', 'breakfast'),
-('Brokastis #4', 'breakfast'),
-('Pusdienas #1', 'lunch'),
-('Pusdienas #2', 'lunch'),
-('Pusdienas #3', 'lunch'),
-('Pusdienas #4', 'lunch'),
-('Vakariņas #1', 'dinner'),
-('Vakariņas #2', 'dinner'),
-('Vakariņas #3', 'dinner'),
-('Vakariņas #4', 'dinner'),
-('Uzkoda #1', 'snack'),
-('Uzkoda #2', 'snack'),
-('Uzkoda #3', 'snack');
+-- ===== MEALS (with type) =====
+-- ===== MEALS (with type) =====
+INSERT INTO meals(type, name) VALUES
+('breakfast', 'Brokastis #1'),
+('breakfast', 'Brokastis #2'),
+('breakfast', 'Brokastis #3'),
+('breakfast', 'Brokastis #4'),
+('lunch',     'Pusdienas #1'),
+('lunch',     'Pusdienas #2'),
+('lunch',     'Pusdienas #3'),
+('lunch',     'Pusdienas #4'),
+('dinner',    'Vakariņas #1'),
+('dinner',    'Vakariņas #2'),
+('dinner',    'Vakariņas #3'),
+('dinner',    'Vakariņas #4'),
+('snack',     'Uzkoda #1'),
+('snack',     'Uzkoda #2'),
+('snack',     'Uzkoda #3');
 
 -- ===== MEAL ITEMS (no IDs needed) =====
 

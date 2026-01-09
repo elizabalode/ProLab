@@ -1,16 +1,30 @@
+PRAGMA foreign_keys = ON;
+
+-- ========== ACCOUNTS (AUTH) ==========
+CREATE TABLE IF NOT EXISTS accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ========== USER PROFILE ==========
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER UNIQUE NOT NULL,
   name TEXT,
   weight_kg REAL NOT NULL,
   height_cm REAL NOT NULL,
-  age INTEGER DEFAULT 25,
-  sex TEXT DEFAULT 'M',
-  activity REAL DEFAULT 1.4,
-  target_kcal REAL
+  age INTEGER NOT NULL DEFAULT 25,
+  sex TEXT NOT NULL DEFAULT 'M',
+  activity REAL NOT NULL DEFAULT 1.4,
+  target_kcal REAL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
-
-
+-- ========== FOODS ==========
 CREATE TABLE IF NOT EXISTS foods (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   fdc_id INTEGER UNIQUE,
@@ -18,39 +32,36 @@ CREATE TABLE IF NOT EXISTS foods (
   kcal_per_100g REAL NOT NULL
 );
 
+-- ========== MEALS (templates) ==========
 CREATE TABLE IF NOT EXISTS meals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('breakfast','lunch','dinner','snack'))
+  type TEXT NOT NULL CHECK (type IN ('breakfast','lunch','dinner','snack')),
+  name TEXT NOT NULL
 );
-
-
 
 CREATE TABLE IF NOT EXISTS meal_items (
   meal_id INTEGER NOT NULL,
   food_id INTEGER NOT NULL,
   grams REAL NOT NULL,
   PRIMARY KEY (meal_id, food_id),
-  FOREIGN KEY (meal_id) REFERENCES meals(id),
-  FOREIGN KEY (food_id) REFERENCES foods(id)
+  FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE,
+  FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE
 );
 
+-- ========== MEAL PLANS (HISTORY) ==========
+-- Svarīgi: šeit vairs NAV PRIMARY KEY (user_id, plan_date),
+-- jo mums vajag saglabāt vairākus plānus vienam datumam (vēsture).
 CREATE TABLE IF NOT EXISTS meal_plans (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   plan_date TEXT NOT NULL,
   breakfast_meal_id INTEGER NOT NULL,
   lunch_meal_id INTEGER NOT NULL,
   dinner_meal_id INTEGER NOT NULL,
-  PRIMARY KEY (user_id, plan_date),
-  FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS accounts (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  created_at TEXT DEFAULT (datetime('now'))
+  target_kcal REAL NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 
-ALTER TABLE users ADD COLUMN account_id INTEGER;
+CREATE INDEX IF NOT EXISTS idx_meal_plans_user_date
+ON meal_plans(user_id, plan_date, created_at);

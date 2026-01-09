@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="lv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ēdienkarte pēc dienām</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; max-width: 980px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+    .card { border:1px solid #ddd; border-radius:10px; padding:14px; margin:12px 0; }
+    label { display:block; font-size:13px; margin-top:8px; }
+    input, select, button { padding:8px; font-size:14px; }
+    input, select { min-width: 220px; }
+    button { cursor:pointer; }
+    .muted { color:#666; font-size: 13px; }
+    .ok { color:#0a7a2f; }
+    .err { color:#b10000; }
+    ul { margin: 8px 0 0 18px; }
+  </style>
+</head>
+<body>
+
+<h1>Balanced Meal Planner</h1>
+
+<div class="card">
+  <div class="row">
+    <div><b>Status:</b> <span id="authStatus" class="muted">…</span></div>
+    <div><b>Profile:</b> <span id="profileStatus" class="muted">…</span></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card" style="flex:1; min-width: 320px;">
+    <h2>Autorizācija</h2>
+    <label>Email</label>
+    <input id="email" type="email" placeholder="email@example.com" />
+    <label>Parole</label>
+    <input id="password" type="password" placeholder="••••••••" />
+    <div class="row" style="margin-top:12px;">
+      <button id="registerBtn">Reģistrēties</button>
+      <button id="loginBtn">Ieiet</button>
+      <button id="logoutBtn">Iziet</button>
+    </div>
+    <p id="authMsg" class="muted"></p>
+  </div>
+
+  <div class="card" style="flex:1; min-width: 320px;">
+    <h2>Profils</h2>
+
+    <label>Vārds</label>
+    <input id="name" placeholder="User" />
+
+    <div class="row">
+      <div>
+        <label>Svars (kg)</label>
+        <input id="weight" type="number" step="0.1" />
+      </div>
+      <div>
+        <label>Augums (cm)</label>
+        <input id="height" type="number" step="0.1" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Vecums</label>
+        <input id="age" type="number" step="1" />
+      </div>
+      <div>
+        <label>Dzimums</label>
+        <select id="sex">
+          <option value="F">F</option>
+          <option value="M">M</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Aktivitāte (PAL)</label>
+    <select id="activity">
+      <option value="1.2">1.2 (sedentary)</option>
+      <option value="1.375">1.375 (light)</option>
+      <option value="1.55" selected>1.55 (moderate)</option>
+      <option value="1.725">1.725 (active)</option>
+      <option value="1.9">1.9 (very active)</option>
+    </select>
+
+    <label>Manuāls target_kcal (var atstāt tukšu)</label>
+    <input id="target_kcal" type="number" step="1" placeholder="(empty)" />
+
+    <div class="row" style="margin-top:12px;">
+      <button id="loadProfileBtn">Ielādēt profilu</button>
+      <button id="saveProfileBtn">Saglabāt profilu</button>
+    </div>
+
+    <p id="profileMsg" class="muted"></p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Plāns</h2>
+
+  <div class="row">
+    <div>
+      <label>Datums</label>
+      <input id="date" type="date" />
+    </div>
+    <button id="loadPlanBtn">Load plan (latest)</button>
+    <button id="newPlanBtn">Generate NEW plan</button>
+  </div>
+
+  <div class="row" style="margin-top:12px;">
+    <button id="refreshHistoryBtn">Refresh history</button>
+    <select id="planHistory">
+      <option value="">-- izvēlies iepriekšējo plānu --</option>
+    </select>
+  </div>
+
+  <div id="planOut" style="margin-top:14px;"></div>
+</div>
+
+<script>
+function $(id){ return document.getElementById(id); }
+
+function setMsg(el, text, type){
+  el.textContent = text || "";
+  el.className = type === "ok" ? "ok" : type === "err" ? "err" : "muted";
+}
+
+async function fetchJson(url, opts){
+  const res = await fetch(url, opts);
+  const data = await res.json().catch(()=>({}));
+  return {res, data};
+}
+
+function mealHtml(title, meal) {
+  return `
+    <div class="card">
+      <h3>${title} — ${meal.kcal} kcal</h3>
+      <ul>
+        ${meal.items.map(i => `<li>${i.name} — ${i.grams}g (~${i.kcal} kcal)</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
+function renderPlan(data){
+  $("planOut").innerHTML = `
+    <p><b>Datums:</b> ${data.date} | <b>Created:</b> ${data.created_at}</p>
+    <p><b>Plan ID:</b> ${data.plan_id} | <b>Mērķis:</b> ${data.target_kcal} kcal | <b>Kopā:</b> ${data.total_kcal} kcal | <b>Scale:</b> ${data.scale_factor}</p>
+    ${mealHtml("Brokastis", data.meals.breakfast)}
+    ${mealHtml("Pusdienas", data.meals.lunch)}
+    ${mealHtml("Vakariņas", data.meals.dinner)}
+  `;
+}
+
+// ---- auth ----
+async function refreshAuth(){
+  const {res, data} = await fetchJson("/api/me");
+  if (!res.ok) return;
+  $("authStatus").textContent = data.logged_in ? "logged in" : "logged out";
+  if (!data.logged_in){
+    $("profileStatus").textContent = "—";
+  }
+}
+
+$("registerBtn").onclick = async () => {
+  const payload = { email: $("email").value, password: $("password").value };
+  const {res, data} = await fetchJson("/api/register", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) return setMsg($("authMsg"), data.error || "Register failed", "err");
+  setMsg($("authMsg"), "Reģistrācija OK. Tagad ieej (Login).", "ok");
+};
+
+$("loginBtn").onclick = async () => {
+  const payload = { email: $("email").value, password: $("password").value };
+  const {res, data} = await fetchJson("/api/login", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) return setMsg($("authMsg"), data.error || "Login failed", "err");
+  setMsg($("authMsg"), "Login OK", "ok");
+  await refreshAuth();
+  await loadProfile();
+  await refreshHistory();
+};
+
+$("logoutBtn").onclick = async () => {
+  await fetchJson("/api/logout", {method:"POST"});
+  setMsg($("authMsg"), "Logged out", "ok");
+  $("planOut").innerHTML = "";
+  $("planHistory").innerHTML = `<option value="">-- izvēlies iepriekšējo plānu --</option>`;
+  await refreshAuth();
+};
+
+// ---- profile ----
+async function loadProfile(){
+  const {res, data} = await fetchJson("/api/profile");
+  if (res.status === 401) {
+    $("profileStatus").textContent = "login required";
+    return setMsg($("profileMsg"), "Vispirms ieej (login).", "err");
+  }
+  if (!res.ok) return setMsg($("profileMsg"), data.error || "Profile error", "err");
+
+  if (!data.has_profile){
+    $("profileStatus").textContent = "no profile";
+    return setMsg($("profileMsg"), "Profils nav izveidots. Aizpildi un saglabā.", "");
+  }
+
+  $("name").value = data.name ?? "";
+  $("weight").value = data.weight_kg ?? "";
+  $("height").value = data.height_cm ?? "";
+  $("age").value = data.age ?? "";
+  $("sex").value = data.sex ?? "F";
+  $("activity").value = String(data.activity ?? "1.55");
+  $("target_kcal").value = (data.target_kcal ?? "");
+
+  $("profileStatus").textContent = "loaded";
+  setMsg($("profileMsg"), "Profils ielādēts.", "ok");
+}
+
+async function saveProfile(){
+  const payload = {
+    name: $("name").value,
+    weight_kg: $("weight").value,
+    height_cm: $("height").value,
+    age: $("age").value,
+    sex: $("sex").value,
+    activity: $("activity").value,
+    target_kcal: $("target_kcal").value
+  };
+
+  const {res, data} = await fetchJson("/api/profile", {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+
+  if (res.status === 401) return setMsg($("profileMsg"), "Vispirms ieej (login).", "err");
+  if (!res.ok) return setMsg($("profileMsg"), data.error || "Save error", "err");
+
+  $("profileStatus").textContent = "saved";
+  setMsg($("profileMsg"), "Profils saglabāts ✅", "ok");
+  await loadProfile();
+  await refreshHistory();
+}
+
+$("loadProfileBtn").onclick = loadProfile;
+$("saveProfileBtn").onclick = saveProfile;
+
+// ---- plans ----
+$("loadPlanBtn").onclick = async () => {
+  const date = $("date").value;
+  const {res, data} = await fetchJson(`/api/plan?date=${encodeURIComponent(date)}&mode=latest`);
+  if (res.status === 401) return alert("Vispirms ieej (login).");
+  if (!res.ok) return alert(data.error || "Plan error");
+  renderPlan(data);
+  await refreshHistory();
+};
+
+$("newPlanBtn").onclick = async () => {
+  const date = $("date").value;
+  const {res, data} = await fetchJson(`/api/plan?date=${encodeURIComponent(date)}&mode=new`);
+  if (res.status === 401) return alert("Vispirms ieej (login).");
+  if (!res.ok) return alert(data.error || "Plan error");
+  renderPlan(data);
+  await refreshHistory();
+};
+
+async function refreshHistory(){
+  const {res, data} = await fetchJson("/api/plans?limit=30");
+  if (res.status === 401) return;
+  if (!res.ok) return;
+
+  const sel = $("planHistory");
+  sel.innerHTML = `<option value="">-- izvēlies iepriekšējo plānu --</option>`;
+  (data.plans || []).forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.plan_id;
+    opt.textContent = `${p.date} | ${Math.round(p.target_kcal)} kcal | ${p.created_at}`;
+    sel.appendChild(opt);
+  });
+}
+
+$("refreshHistoryBtn").onclick = refreshHistory;
+
+$("planHistory").onchange = async (e) => {
+  const id = e.target.value;
+  if (!id) return;
+  const {res, data} = await fetchJson(`/api/plan?mode=id&plan_id=${encodeURIComponent(id)}`);
+  if (!res.ok) return alert(data.error || "Cannot load selected plan");
+  renderPlan(data);
+};
+
+$("date").valueAsDate = new Date();
+refreshAuth();
+</script>
+
+</body>
+</html>

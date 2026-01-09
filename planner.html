@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="lv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Planner</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body{font-family:"Inter",system-ui,Arial;max-width:900px;margin:24px auto;padding:0 16px;
+      background:linear-gradient(135deg,#e9c2eb,#81aeec);min-height:100vh;}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    input,select,button{padding:10px;font-size:14px;font-family:"Inter",system-ui,Arial}
+    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin-top:14px;background:rgba(223,144,144,0.534)}
+    .nav{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .muted{opacity:.85}
+    a{color:#111;text-decoration:underline}
+    ul{margin:8px 0 0}
+  </style>
+</head>
+<body>
+
+<div class="card nav">
+  <div><b>Balanced Meal Planner</b> <span class="muted">/ planner</span></div>
+  <div class="row">
+    <a href="/login">Login</a>
+    <a href="/profile-page">Profile</a>
+    <a href="/planner">Planner</a>
+    <button id="logoutBtn">Izlogoties</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Ēdienplāna parametri</h2>
+  <div class="row">
+    <input id="date" type="date" />
+    <button id="loadLatest">Ielādēt (latest)</button>
+    <button id="generateNew">Ģenerēt jaunu plānu</button>
+  </div>
+  <p class="muted">Ja profils nav saglabāts, vispirms ej uz “Profile”.</p>
+</div>
+
+<div class="card">
+  <h2>Vēsture</h2>
+  <div class="row">
+    <button id="refreshHistory">Atjaunot vēsturi</button>
+    <select id="historySelect">
+      <option value="">— izvēlies iepriekšējo plānu —</option>
+    </select>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Plāns</h2>
+  <div id="planOut" style="margin-top:12px;"></div>
+</div>
+
+<script>
+function mealHtml(title, meal) {
+  return `
+    <div class="card">
+      <h3>${title} — ${meal.kcal} kcal</h3>
+      <ul>
+        ${meal.items.map(i => `<li>${i.name} — ${i.grams}g (~${i.kcal} kcal)</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
+function renderPlan(data){
+  document.getElementById("planOut").innerHTML = `
+    <p><b>Datums:</b> ${data.date}</p>
+    <p><b>Mērķis:</b> ${data.target_kcal} kcal | <b>Kopā:</b> ${data.total_kcal} kcal</p>
+    ${mealHtml("Brokastis", data.meals.breakfast)}
+    ${mealHtml("Pusdienas", data.meals.lunch)}
+    ${mealHtml("Vakariņas", data.meals.dinner)}
+  `;
+}
+
+async function loadLatest(){
+  const date = document.getElementById("date").value;
+  const res = await fetch(`/api/plan?date=${encodeURIComponent(date)}&mode=latest`);
+  const data = await res.json().catch(()=>({}));
+  if(res.status === 401) { window.location.href="/login"; return; }
+  if(!res.ok) return alert("Plan error: " + (data.error || res.status));
+  renderPlan(data);
+  await refreshHistory();
+}
+
+async function generateNew(){
+  const date = document.getElementById("date").value;
+  const res = await fetch(`/api/plan?date=${encodeURIComponent(date)}&mode=new`);
+  const data = await res.json().catch(()=>({}));
+  if(res.status === 401) { window.location.href="/login"; return; }
+  if(!res.ok) return alert("Plan error: " + (data.error || res.status));
+  renderPlan(data);
+  await refreshHistory();
+}
+
+async function refreshHistory(){
+  const res = await fetch(`/api/plans?limit=30`);
+  const data = await res.json().catch(()=>({}));
+  if(res.status === 401) return;
+  if(!res.ok) return;
+
+  const sel = document.getElementById("historySelect");
+  sel.innerHTML = `<option value="">— izvēlies iepriekšējo plānu —</option>`;
+
+  (data.plans || []).forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.plan_id;
+    opt.textContent = `${p.date} | ${Math.round(p.target_kcal)} kcal | ${p.created_at}`;
+    sel.appendChild(opt);
+  });
+}
+
+document.getElementById("historySelect").onchange = async (e) => {
+  const id = e.target.value;
+  if(!id) return;
+
+  const res = await fetch(`/api/plan?mode=id&plan_id=${encodeURIComponent(id)}`);
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) return alert("Nevar ielādēt plānu: " + (data.error || res.status));
+  renderPlan(data);
+};
+
+document.getElementById("loadLatest").onclick = loadLatest;
+document.getElementById("generateNew").onclick = generateNew;
+document.getElementById("refreshHistory").onclick = refreshHistory;
+
+document.getElementById("logoutBtn").onclick = async () => {
+  await fetch("/api/logout", { method:"POST" });
+  window.location.href="/login";
+};
+
+document.getElementById("date").valueAsDate = new Date();
+refreshHistory();
+</script>
+
+</body>
+</html>
