@@ -72,6 +72,7 @@ Lietotnē ir autorizācija ar e-pastu un paroli, lai funkcionalitāte būtu piee
 
 - Lietotājs var **reģistrēties** un **ielogoties** ar e-pastu un paroli.
 - Katram kontam var būt piesaistīts lietotāja profils (biometriskie dati), kas tiek glabāts datubāzē un automātiski ielādējas pēc ielogošanās.
+- Iepriekš ģenerētās ēdienkartes saglabājas profilā, lai lietotājs var atkārtoti apskatīties bijušās ēdienkartes
 
 Tiek izmantota tabula `accounts`:
 - `email` (unikāls),
