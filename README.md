@@ -54,7 +54,8 @@ Pašreizējā prototipā ēdienkarte tiek veidota no iepriekš definētiem ēdie
    - Sieviete: `10*w + 6.25*h - 5*age - 161`
 2. Dienas kaloriju mērķis: `BMR * activity`
 3. Ēdienplāna ģenerēšana:
-   - ja plāns datumam jau ir DB → atgriež esošo
+   - Edienkartes ģenerēšana saglabājas DB, neatkarīgi no tā vai noteiktajama datumam jau ir bijušas ģenerētas ēdienkartes iepriekš
+   - Ir iespēja izsaukt pēdējo ģenerēto
    - ja nav → izvēlas 3 ēdienus (brokastis/pusdienas/vakariņas) deterministiski pēc datuma (`seed = YYYYMMDD`)
 4. Katras ēdienreizes kcal summa:
    - `kcal = grams * kcal_per_100g / 100`
